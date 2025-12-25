@@ -142,6 +142,7 @@ def main():
                                      | pygame.OPENGL
                                      # | pygame.FULLSCREEN
                                      )
+    pygame.display.set_caption(sys.argv[0])
 
     gl.glMatrixMode(gl.GL_PROJECTION)
     glu.gluPerspective(45, (display[0]/display[1]), 0.1, 50.0)
@@ -168,7 +169,19 @@ def main():
     displayCenter = [screen.get_size()[i] // 2 for i in range(2)]
     mouseMove = [0, 0]
 
-    print(displayCenter)
+    while True:
+        pygame.event.pump()  # Let Pygame talk to X11
+        # Check if the window is focused and visible
+        if pygame.display.get_active():
+            pygame.mouse.set_pos(displayCenter)
+            # 2. Verify the OS actually moved it
+            if list(pygame.mouse.get_pos()) == displayCenter:
+                break
+        # Small sleep so we don't cook the CPU while waiting for the OS
+        pygame.time.delay(10)
+    # 3. Now that it's centered, clear the MOUSEMOTION queue
+    # so your simulator doesn't start with a massive 'jerk'
+    pygame.event.clear()
 
     paused = False
     up_down_angle = 0
@@ -191,11 +204,11 @@ def main():
                     paused = not paused
                     # print(paused)
                     if paused:
-                        pass
-                        # pygame.key.set_repeat(300,10)
+                        print("Paused")
                     else:
+                        print("Unpaused")
                         # pygame.key.set_repeat(300,10)
-                        pygame.mouse.set_pos(displayCenter)
+                        # pygame.mouse.set_pos(displayCenter)
 
                 if pressed[pygame.K_i]:
                     print('Nage position: {}'.format(nage))
@@ -206,7 +219,7 @@ def main():
                     pygame.mouse.set_pos(displayCenter)
 
         if paused:
-            time.sleep(0.1)
+            time.sleep(0.05)
             continue
 
         # init model view matrix
@@ -215,9 +228,6 @@ def main():
         # apply the look up and down
         up_down_angle += mouseMove[1]*0.1
         gl.glRotatef(up_down_angle, 1.0, 0.0, 0.0)
-        # mouse left and right
-        right_left_angle += mouseMove[0]*0.1
-        gl.glRotatef(right_left_angle, 0, 1, 0)
         # init the view matrix
         gl.glPushMatrix()
         gl.glLoadIdentity()
@@ -235,6 +245,10 @@ def main():
             gl.glRotatef(-rot_rate, 0, 1, 0)
         if pressed[pygame.K_RIGHT]:
             gl.glRotatef(rot_rate, 0, 1, 0)
+
+        # rotate left and right
+        right_left_angle = mouseMove[0]*0.1
+        gl.glRotatef(right_left_angle, 0, 1, 0)
 
         # multiply the current matrix by the get the new view matrix
         # and store the final vie matrix
