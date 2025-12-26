@@ -41,7 +41,7 @@ def draw_checkered_floor():
 
 
 def uke_init(how_many, distance):
-    ukes = []
+    ukes = np.array([])
     gl.glEnable(gl.GL_LIGHTING)
     for i in range(how_many):
         uke = np.array([distance*(i-(how_many-1)/2), 0, 0])
@@ -49,35 +49,38 @@ def uke_init(how_many, distance):
         gl.glTranslatef(*uke)
         glut.glutSolidSphere(radius, 32, 32)
         gl.glPopMatrix()            # Restore matrix state for the next sphere
-        ukes.append(uke)
+        ukes = np.vstack((ukes, uke)) if ukes.size else uke
     return ukes
 
 
 def uke_update(ukes, nage):
     gl.glEnable(gl.GL_LIGHTING)
-    new_ukes = []
-    nage = np.array(nage[0:3])  # just nage coordinates
+    new_ukes = np.array([[]])
+    nage_coords = np.array(nage[0:3])  # just nage coordinates
     radius2 = radius*2
-    ukes = np.array(ukes)
-    for uke in ukes:
-        direction = nage - uke
+    for uke in ukes:  # FIXME this loop could be redone towards matrix opeartions for speed up
+        direction = nage_coords - uke
         direction_unit = direction / np.linalg.norm(direction)
         new_uke = uke + (direction_unit * mov_rate)
 
         # nage detection
-        if np.any(np.sum(np.linalg.norm(nage - ukes, axis=1) <= radius2)):
+        if np.linalg.norm(nage_coords - uke) <= radius2:
+            # FIXME which uke?
             print('Nage Caught!')
+            nage_direction_unit = nage[3:]
+            # new_uke = uke  + (nage_direction_unit) * radius2 * 3
             gl.glMaterialfv(gl.GL_FRONT, gl.GL_DIFFUSE, (1, 0.3, 0.3, 1.0))
         else:
             gl.glMaterialfv(gl.GL_FRONT, gl.GL_DIFFUSE, (0.2, 0.8, 0.2, 1.0))
 
+        # if all ukes are not touching each other make it move
         if (np.sum((np.linalg.norm(new_uke - ukes, axis=1) > radius2))
                 >= ukes.shape[0]-1):
             # the above is fster than the below
             # if all([np.linalg.norm(new_uke - o) > (radius2) for o in ukes if any(o != uke)]):
-            new_ukes.append(new_uke)
+            new_ukes = np.vstack((new_ukes, new_uke)) if new_ukes.size else new_uke
         else:
-            new_ukes.append(uke)
+            new_ukes = np.vstack((new_ukes, uke)) if new_ukes.size else uke
 
         gl.glPushMatrix()           # Save current matrix state
         gl.glTranslatef(*uke)
@@ -118,15 +121,13 @@ def get_camera_position():
 
 
 def main():
-    nage = [0,  # x
-            0,  # y
-            4,  # z
-            0,  # face dir x
-            0,  # face dir y
-            0]  # face dir z
-
-    ukes = []
-
+    nage = np.array([0,  # x
+                     0,  # y
+                     4,  # z
+                     0,  # face dir x
+                     0,  # face dir y
+                     0])  # face dir z
+    ukes = np.array([])
     if len(sys.argv) != 2:
         print(f'Randori simulator.\nUsage: {sys.argv[0]} number_of_ukes')
         exit(1)
@@ -265,7 +266,7 @@ def main():
 
         draw_checkered_floor()
 
-        if ukes == []:
+        if ukes.size == 0:
             ukes = uke_init(number_of_ukes, 1.5)
         else:
             ukes = uke_update(ukes, nage)
