@@ -15,6 +15,8 @@ mov_rate = 0.1
 nage_mov_rate = 0.13
 radius = 0.4
 
+sound = 0
+
 
 def draw_checkered_floor():
     """Draws a large checkered floor using small gray quads."""
@@ -65,23 +67,30 @@ def uke_update(ukes, nage):
 
         # nage detection
         if np.linalg.norm(nage_coords - uke) <= radius2:
-            # FIXME which uke?
-            print('Nage Caught!')
+            # print('Nage Caught!')
+            beep()
             nage_direction_unit = nage[3:]
-            # new_uke = uke  + (nage_direction_unit) * radius2 * 3
+            new_uke = uke + (nage_direction_unit) * radius2 * 2
+            # new_uke = new_uke + (direction_unit * mov_rate)*10
             gl.glMaterialfv(gl.GL_FRONT, gl.GL_DIFFUSE, (1, 0.3, 0.3, 1.0))
         else:
             gl.glMaterialfv(gl.GL_FRONT, gl.GL_DIFFUSE, (0.2, 0.8, 0.2, 1.0))
 
-        # if all ukes are not touching each other make it move
-        if (np.sum((np.linalg.norm(new_uke - ukes, axis=1) > radius2))
+        # if new_uke does not touch other ukes allow for the move
+        uke_distances = np.linalg.norm(new_uke - ukes, axis=1)
+        if (np.sum((uke_distances > radius2))
                 >= ukes.shape[0]-1):
             # the above is fster than the below
             # if all([np.linalg.norm(new_uke - o) > (radius2) for o in ukes if any(o != uke)]):
-            new_ukes = np.vstack((new_ukes, new_uke)) if new_ukes.size else new_uke
+            pass
         else:
-            new_ukes = np.vstack((new_ukes, uke)) if new_ukes.size else uke
-
+            random_direction = np.random.randn(3) - 0.5
+            random_direction[1] = 0  # movment x,z only
+            random_direction_unit = (random_direction
+                                     / np.linalg.norm(random_direction))
+            new_uke = uke + (random_direction_unit * mov_rate)
+        new_ukes = np.vstack((new_ukes, new_uke)
+                             ) if new_ukes.size else new_uke
         gl.glPushMatrix()           # Save current matrix state
         gl.glTranslatef(*uke)
         glut.glutSolidSphere(radius, 32, 32)
@@ -120,6 +129,29 @@ def get_camera_position():
     return np.concatenate([camera_pos, forward])
 
 
+def beep_init():
+    global sound
+    # Initialize mixer: 44.1kHz, 16-bit signed, mono
+    pygame.mixer.init(44100, -16, 1) 
+   
+    sample_rate = 44100
+    frequency = 440.0
+    duration = 0.3  # seconds
+   
+    # Generate sine wave
+    t = np.linspace(0, duration, int(sample_rate * duration), False)
+    # Scale to 16-bit integer range (-32768 to 32767)
+    wave = np.sin(2 * np.pi * frequency * t) * 32767
+    buffer = wave.astype(np.int16)
+   
+    sound = pygame.mixer.Sound(buffer)
+
+
+def beep():
+    global sound
+    if not pygame.mixer.get_busy():
+        sound.play()
+
 def main():
     nage = np.array([0,  # x
                      0,  # y
@@ -135,7 +167,7 @@ def main():
 
     pygame.init()
     clock = pygame.time.Clock()
-
+    
     glut.glutInit()
     display = (1280, 720)
     screen = pygame.display.set_mode(display,
@@ -145,6 +177,8 @@ def main():
                                      )
     pygame.display.set_caption(sys.argv[0])
 
+    beep_init()
+    
     gl.glMatrixMode(gl.GL_PROJECTION)
     glu.gluPerspective(45, (display[0]/display[1]), 0.1, 50.0)
 
