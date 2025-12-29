@@ -157,10 +157,18 @@ def beep_init():
     duration = 0.3  # seconds
 
     # Generate sine wave
-    t = np.linspace(0, duration, int(sample_rate * duration), False)
+    num_samples = int(sample_rate * duration)
+    t = np.linspace(0, duration, num_samples, False)
+    wave = np.sin(2 * np.pi * frequency * t)
+
+    # Create a linear fade-out envelope (from 1 to 0)
+    envelope = np.linspace(1, 0, num_samples)
+
+    # Apply the envelope to the sine wave
+    fading_wave = wave * envelope
+
     # Scale to 16-bit integer range (-32768 to 32767)
-    wave = np.sin(2 * np.pi * frequency * t) * 32767
-    buffer = wave.astype(np.int16)
+    buffer = (fading_wave * 32767).astype(np.int16)
 
     sound = pygame.mixer.Sound(buffer)
 
