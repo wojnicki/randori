@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2018 Igor Wojnicki
+# Copyright 2025 Igor Wojnicki
 # This software is distributed under the terms of
 # the GNU General Public License version 3
 
@@ -171,6 +171,18 @@ def beep():
         sound.play()
 
 
+def argparse_init():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--full-screen',
+                        help='full screen',
+                        action="store_true")
+    parser.add_argument('ukes',
+                        help='number of ukes',
+                        type=int)
+    args = parser.parse_args()
+    return args
+
+
 def main():
     nage = np.array([0,  # x
                      0,  # y
@@ -180,42 +192,21 @@ def main():
                      0])  # face dir z
     ukes = np.array([])
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-f', '--full-screen',
-                        help='full screen',
-                        action="store_true")
-    parser.add_argument('ukes',
-                        help='number of ukes',
-                        type=int)
-    args = parser.parse_args()
-
+    args = argparse_init()
+    number_of_ukes = args.ukes
+    pygame.init()
+    clock = pygame.time.Clock()
+    glut.glutInit()
+    display = (1280, 720)
     set_mode_flags = pygame.DOUBLEBUF | pygame.OPENGL
     if args.full_screen:
         set_mode_flags |= pygame.FULLSCREEN
-
-    # if len(sys.argv) != 2:
-    #     print(f'Randori simulator.\nUsage: {sys.argv[0]} number_of_ukes')
-    #     exit(1)
-    number_of_ukes = args.ukes
-
-    pygame.init()
-    clock = pygame.time.Clock()
-
-    glut.glutInit()
-    display = (1280, 720)
     screen = pygame.display.set_mode(display,  set_mode_flags)
-                                     # pygame.DOUBLEBUF
-                                     # | pygame.OPENGL
-                                     # | pygame.FULLSCREEN
-                                     # )
     pygame.display.set_caption(sys.argv[0])
-
     beep_init()
 
     gl.glMatrixMode(gl.GL_PROJECTION)
     glu.gluPerspective(45, (display[0]/display[1]), 0.1, 50.0)
-
-    # glTranslatef(0.0,0.0, -5)
 
     # 4. Setup Lighting (Makes the sphere look 3D rather than a flat circle)
     gl.glEnable(gl.GL_DEPTH_TEST)
@@ -236,7 +227,6 @@ def main():
     # init mouse movement and center mouse on screen
     displayCenter = [screen.get_size()[i] // 2 for i in range(2)]
     mouseMove = [0, 0]
-
     while True:
         pygame.event.pump()  # Let Pygame talk to X11
         # Check if the window is focused and visible
@@ -270,14 +260,10 @@ def main():
                         or pressed[pygame.K_p]
                         or pressed[pygame.K_SPACE]):
                     paused = not paused
-                    # print(paused)
                     if paused:
                         print("Paused")
                     else:
                         print("Unpaused")
-                        # pygame.key.set_repeat(300,10)
-                        # pygame.mouse.set_pos(displayCenter)
-
                 if pressed[pygame.K_i]:
                     print('Nage position: {}'.format(nage))
             if event.type == pygame.MOUSEMOTION:
@@ -340,8 +326,6 @@ def main():
 
         pygame.display.flip()
         clock.tick(30)  # 30 fps
-
-        # pygame.time.wait(10)
 
 
 if __name__ == '__main__':
