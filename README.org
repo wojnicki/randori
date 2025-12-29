@@ -1,0 +1,19 @@
+* Randori
+
+The Randori Simulator is a minimalist 3D interactive experience built using Python, Pygame, and OpenGL. At its core, it's a simulation where the player, acting as a central figure known as "Nage," navigates a virtual space inhabited by multiple AI-controlled (an overstatement) entities referred to as "Ukes." The primary goal of the simulation is not to get caught by Ukes. 
+
+As Nage, the player controls a first-person camera that acts as their virtual avatar. This camera represents Nage's position and orientation within the 3D world. The controls are : =W, S, A, D=, =left/right arrow= and =mouse=. 
+
+The Ukes, represented as simple spheres, are designed with a degree of autonomous movement. Each Uke constantly attempts to drift towards Nage, creating a dynamic sense of engagement. However, their movement isn't entirely predictable; a small component of randomness is introduced, making their paths less linear and adding a subtle challenge to Nage's interactions. They also react to each other, attempting to avoid collisions with fellow Ukes.
+
+A key interaction within the simulator is the "catch" mechanism. When Nage gets within a certain proximity of an Uke, a distinct "beep" sound is played, and the affected Uke momentarily changes color to red, signaling a successful interaction. Furthermore, upon being "caught," the Uke is pushed away from Nage with an increased force, simulating a throw or dispersal effect, adding a dynamic and responsive element to the gameplay.
+
+The project leverages Python for its scripting capabilities, Pygame for window management and event handling, and the PyOpenGL library to interface with the OpenGL API for 3D rendering. NumPy is utilized extensively for efficient vector and matrix operations, particularly for managing Uke positions, calculating distances, and handling camera transformations, ensuring smooth performance even with multiple entities.
+
+Player control is handled through both keyboard and mouse input. The mouse is used to control Nage's gaze, allowing for free-look rotation around the yaw and pitch axes, mimicking a typical first-person perspective. Keyboard keys (W, A, S, D) enable translational movement (forward, strafe, backward), while additional keys provide vertical movement, giving the player full control over their position in the 3D space.
+
+A pause mechanism is implemented, allowing players to halt the simulation at any moment by pressing 'P' or 'Space'. When paused, camera movement is disabled, and Uke updates are suspended, providing a moment of respite or an opportunity to observe the frozen state of the simulation.
+
+To run the simulator, simply execute the Python script from your terminal, providing the desired number of Ukes as a command-line argument (e.g., `python randori.py 4`).
+
+This project serves as a foundational example of 3D simulation in Python, offering a clear structure for handling game logic, rendering, and user input. Future enhancements could include more complex Uke AI, diverse environments, or additional player abilities.

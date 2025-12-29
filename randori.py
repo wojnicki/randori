@@ -1,18 +1,15 @@
 import pygame
-
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 import OpenGL.GLUT as glut
-
 import time
-
 import numpy as np
-
 import sys
+import argparse
 
 rot_rate = 4
 mov_rate = 0.1
-nage_mov_rate = 0.13
+nage_mov_rate = 0.1
 radius = 0.4
 
 sound = 0
@@ -60,10 +57,16 @@ def uke_update(ukes, nage):
     new_ukes = np.array([[]])
     nage_coords = np.array(nage[0:3])  # just nage coordinates
     radius2 = radius*2
+
     for uke in ukes:  # FIXME this loop could be redone towards matrix opeartions for speed up
+        random_direction = np.random.randn(3) - 0.5
+        random_direction[1] = 0  # movment x,z only
+        random_direction_unit = (random_direction
+                                 / np.linalg.norm(random_direction))
         direction = nage_coords - uke
         direction_unit = direction / np.linalg.norm(direction)
-        new_uke = uke + (direction_unit * mov_rate)
+        new_uke = (uke + (direction_unit * mov_rate)
+                   + (random_direction * mov_rate * 0.1))  # 10% of randomness
 
         # nage detection
         if np.linalg.norm(nage_coords - uke) <= radius2:
@@ -84,10 +87,6 @@ def uke_update(ukes, nage):
             # if all([np.linalg.norm(new_uke - o) > (radius2) for o in ukes if any(o != uke)]):
             pass
         else:
-            random_direction = np.random.randn(3) - 0.5
-            random_direction[1] = 0  # movment x,z only
-            random_direction_unit = (random_direction
-                                     / np.linalg.norm(random_direction))
             new_uke = uke + (random_direction_unit * mov_rate)
         new_ukes = np.vstack((new_ukes, new_uke)
                              ) if new_ukes.size else new_uke
@@ -133,17 +132,17 @@ def beep_init():
     global sound
     # Initialize mixer: 44.1kHz, 16-bit signed, mono
     pygame.mixer.init(44100, -16, 1) 
-   
+  
     sample_rate = 44100
     frequency = 440.0
     duration = 0.3  # seconds
-   
+  
     # Generate sine wave
     t = np.linspace(0, duration, int(sample_rate * duration), False)
     # Scale to 16-bit integer range (-32768 to 32767)
     wave = np.sin(2 * np.pi * frequency * t) * 32767
     buffer = wave.astype(np.int16)
-   
+  
     sound = pygame.mixer.Sound(buffer)
 
 
@@ -160,21 +159,35 @@ def main():
                      0,  # face dir y
                      0])  # face dir z
     ukes = np.array([])
-    if len(sys.argv) != 2:
-        print(f'Randori simulator.\nUsage: {sys.argv[0]} number_of_ukes')
-        exit(1)
-    number_of_ukes = int(sys.argv[1])
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--full-screen',
+                        help='full screen',
+                        action="store_true")
+    parser.add_argument('ukes',
+                        help='number of ukes',
+                        type=int)
+    args = parser.parse_args()
+
+    set_mode_flags = pygame.DOUBLEBUF | pygame.OPENGL
+    if args.full_screen:
+        set_mode_flags |= pygame.FULLSCREEN
+        
+    # if len(sys.argv) != 2:
+    #     print(f'Randori simulator.\nUsage: {sys.argv[0]} number_of_ukes')
+    #     exit(1)
+    number_of_ukes = args.ukes
 
     pygame.init()
     clock = pygame.time.Clock()
     
     glut.glutInit()
     display = (1280, 720)
-    screen = pygame.display.set_mode(display,
-                                     pygame.DOUBLEBUF
-                                     | pygame.OPENGL
+    screen = pygame.display.set_mode(display,  set_mode_flags)
+                                     # pygame.DOUBLEBUF
+                                     # | pygame.OPENGL
                                      # | pygame.FULLSCREEN
-                                     )
+                                     # )
     pygame.display.set_caption(sys.argv[0])
 
     beep_init()
@@ -231,7 +244,7 @@ def main():
                 pressed = pygame.key.get_pressed()
                 if pressed[pygame.K_q] or pressed[pygame.K_ESCAPE]:
                     pygame.quit()
-                    quit()
+                    exit(0)
                 if (
                         pressed[pygame.K_PAUSE]
                         or pressed[pygame.K_p]
