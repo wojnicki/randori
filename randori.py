@@ -131,18 +131,18 @@ def get_camera_position():
 def beep_init():
     global sound
     # Initialize mixer: 44.1kHz, 16-bit signed, mono
-    pygame.mixer.init(44100, -16, 1) 
-  
+    pygame.mixer.init(44100, -16, 1)
+
     sample_rate = 44100
     frequency = 440.0
     duration = 0.3  # seconds
-  
+
     # Generate sine wave
     t = np.linspace(0, duration, int(sample_rate * duration), False)
     # Scale to 16-bit integer range (-32768 to 32767)
     wave = np.sin(2 * np.pi * frequency * t) * 32767
     buffer = wave.astype(np.int16)
-  
+
     sound = pygame.mixer.Sound(buffer)
 
 
@@ -150,6 +150,7 @@ def beep():
     global sound
     if not pygame.mixer.get_busy():
         sound.play()
+
 
 def main():
     nage = np.array([0,  # x
@@ -172,7 +173,7 @@ def main():
     set_mode_flags = pygame.DOUBLEBUF | pygame.OPENGL
     if args.full_screen:
         set_mode_flags |= pygame.FULLSCREEN
-        
+
     # if len(sys.argv) != 2:
     #     print(f'Randori simulator.\nUsage: {sys.argv[0]} number_of_ukes')
     #     exit(1)
@@ -180,7 +181,7 @@ def main():
 
     pygame.init()
     clock = pygame.time.Clock()
-    
+
     glut.glutInit()
     display = (1280, 720)
     screen = pygame.display.set_mode(display,  set_mode_flags)
@@ -191,7 +192,7 @@ def main():
     pygame.display.set_caption(sys.argv[0])
 
     beep_init()
-    
+
     gl.glMatrixMode(gl.GL_PROJECTION)
     glu.gluPerspective(45, (display[0]/display[1]), 0.1, 50.0)
 
